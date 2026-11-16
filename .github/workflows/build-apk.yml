@@ -1,7 +1,7 @@
 name: Build APK from ZIP
 
-# 手机上传 zip 用这个版本：先解压你传上来的 zip，再编译 APK
-# zip 文件名必须是 hajimi-github-apk.zip，放在仓库根目录
+# 手机上传 zip 用这个版本：先找到你传上来的 zip 解压，再编译 APK
+# 把 hajimi-github-apk.zip 传到仓库里（根目录最好，放文件夹里也能找到）
 on:
   push:
     branches:
@@ -19,7 +19,11 @@ jobs:
 
       - name: Unzip uploaded project
         run: |
-          unzip -q hajimi-github-apk.zip -d app
+          ls -la
+          ZIP=$(find . -maxdepth 3 -name "*.zip" | head -n 1)
+          if [ -z "$ZIP" ]; then echo "仓库里没有找到 zip 文件，请先把 hajimi-github-apk.zip 传到仓库里再跑"; exit 1; fi
+          echo "找到 zip：$ZIP"
+          unzip -q "$ZIP" -d app
           ls app
 
       - name: Setup Node.js 20
