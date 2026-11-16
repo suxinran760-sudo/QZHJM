@@ -1,0 +1,53 @@
+name: Build APK from ZIP
+
+# 手机上传 zip 用这个版本：先解压你传上来的 zip，再编译 APK
+# zip 文件名必须是 hajimi-github-apk.zip，放在仓库根目录
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Unzip uploaded project
+        run: |
+          unzip -q hajimi-github-apk.zip -d app
+          ls app
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install dependencies
+        run: cd app && npm ci
+
+      - name: Sync web assets to Android
+        run: cd app && npx cap sync android
+
+      - name: Build debug APK
+        run: |
+          cd app
+          chmod +x android/gradlew
+          cd android && ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: hajimi-apk
+          path: app/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
